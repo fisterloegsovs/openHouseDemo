@@ -1,14 +1,16 @@
 # Open House Terminal Shows
 
-To **separate terminalprogrammer** til en cybersikkerhedsopstilling:
+Tre **separate terminalprogrammer** til en cybersikkerhedsopstilling:
 
 - **Red team — `red_team.py`:** Et grønt hacker-show med root-console,
   sessions, navneudtræk, hex-buffers, progressbarer og filoverførsler.
 - **Blue team — `blue_team.py`:** En cyanfarvet SOC-terminal med overvågning,
   røde alarmer, trafik, bevismateriale og hændelseshåndtering.
+- **Satellitstation — `satellite.py`:** Et stort verdenskort med banespor,
+  dækningsområde, polardiagram og et valgfrit radiospektrum.
 
-Hvert program har egne visninger og sit eget simulerede forløb. Der er ingen
-menu, som skifter mellem holdene. Panelerne fylder hele terminalens højde og
+Hvert program har sit eget simulerede forløb. Der er ingen menu, som skifter
+mellem programmerne. Red- og blue-team-panelerne fylder hele terminalens højde og
 bredde: én kolonne på smalle vinduer, to på almindelige vinduer og tre på brede
 skærme. Logs og buffers fortsætter med at bevæge sig mellem faserne.
 
@@ -70,7 +72,48 @@ Blue-team-forløbet går fra normal overvågning til afvigelser, kritiske alarme
 blokering og inddæmning. Det kræver ikke navnedatasættet. De to hold har
 selvstændige historier; de udveksler ingen data og påvirker ikke hinanden.
 
-## Betjening og gentagelse
+## Satellitstation
+
+![Eksempel på satellitstationens terminal](assets/satellite.png)
+
+```bash
+python3 satellite.py
+```
+
+Visningen er inspireret af satellitmonitoren i referencen: en smal statuskolonne
+og et stort kort med nedtonede kystlinjer. Cyan viser tilstødende banespor,
+gul det aktuelle spor og grøn satellittens dækningsområde. Markøren viser
+satellittens position; et polardiagram viser den fiktive antenneretning.
+
+Tilføj radiospektrum og waterfall nederst på kortet:
+
+```bash
+python3 satellite.py --waterfall
+```
+
+- **1–3:** Vælg mellem AURORA-1, POLARIS-2 og VEGA-3.
+- **W:** Vis eller skjul spectrum/waterfall.
+- **P**, **R** og **Q:** Pause, genstart og afslut.
+
+Satellitterne er opdigtede og bruger en tilnærmet, cirkulær bane. Banerne
+fortsætter løbende, uden at programmet skal genstartes. Standardhastigheden er
+60 gange virkelig tid; `--speed 30` gør bevægelsen langsommere. Sidebarens
+position, azimut, elevation og signalstatus følger den simulerede bane.
+Spektrum og waterfall er visuelle effekter, ikke målinger eller radiomodtagelse.
+
+Jordstationens fiktive position er som standard ved København. Den kan ændres:
+
+```bash
+python3 satellite.py --latitude 55.68 --longitude 12.57 --station 3
+```
+
+Denne visning kræver mindst **70 × 24** terminalceller. Den bruger braille-tegn
+til fine kortdetaljer; hvis din skrifttype viser firkanter, prøv en anden
+terminalskrifttype eller `--ascii`. Kystlinjerne fra Natural Earth er med i
+projektet, så internet og en SatNOGS-station ikke er nødvendige. Kilde og
+public-domain-vilkår står i [assets/COASTLINES.md](assets/COASTLINES.md).
+
+## Betjening og gentagelse for red og blue team
 
 - **1–5:** Skift visning inden for det program, du har startet.
 - **P** eller **mellemrum:** Pause eller fortsæt.
@@ -104,6 +147,8 @@ På en anden maskine:
 py -3 blue_team.py --mode overview --station 6
 ```
 
+Satellitvisningen startes med `py -3 satellite.py`.
+
 Argumenterne og tasterne er de samme. Tilføj `--ascii`, hvis bloktegn eller
 rammer vises forkert, eller `--no-color` for at slå farver fra. Windows er
 understøttet i koden, men endnu ikke afprøvet på en Windows-PC.
@@ -126,6 +171,7 @@ mærket med `SIMULATION / FIKTIVE DATA` nederst.
 python3 -m unittest -v
 python3 red_team.py --mode extract --frames 1 --no-color
 python3 blue_team.py --mode alerts --frames 1 --no-color
+python3 satellite.py --frames 1 --no-color
 ```
 
 `--frames 1` skriver ét skærmbillede uden at kræve en interaktiv terminal.
@@ -135,7 +181,7 @@ Kør ét helt, forkortet forløb i en terminal med:
 python3 red_team.py --duration 20 --once
 ```
 
-Den samme kontrol kan udføres med `blue_team.py`.
+Den samme kontrol kan udføres med `blue_team.py` og `satellite.py`.
 
 ## Generér nye navne
 
