@@ -12,14 +12,22 @@ PALETTE = {"green": "32", "bright": "92", "white": "97", "dim": "2;32", "yellow"
 ASCII = str.maketrans({"█": "#", "░": ".", "─": "-", "│": "|", "┌": "+",
                       "┐": "+", "└": "+", "┘": "+", "▁": ".", "▂": "_",
                       "▃": "-", "▄": "=", "▅": "+", "▆": "*", "▇": "#"})
-FILES = (("cpr_register.enc", 48.0), ("cpr_numre.csv", 3.2), ("cpr_navne.log", 12.8))
+TOTAL_RECORDS = 8_800_000
+FILES = (("cpr_register.enc", 1650.0), ("cpr_numre.csv", 110.0), ("cpr_navne.log", 440.0))
+
+
+def record_count(value):
+    return f"{value:,}".replace(",", ".")
 
 
 def demo_cpr(index):
     """CPR-lignende demoværdi. Dag 00 er ugyldig og kan ikke være et rigtigt CPR."""
-    month = 1 + (index * 7) % 12
-    year = (40 + (index * 37) % 65) % 100
-    serial = 1 + index % 9999
+    # 7.919 er indbyrdes primisk med 12.000.000: ingen gentagelser i udtrækket.
+    # De 12 måneder, 100 årstal og 10.000 løbenumre har alle ugyldig dag 00.
+    value = (index * 7919 + 400001) % 12_000_000
+    month = 1 + value // 1_000_000
+    year = value // 10_000 % 100
+    serial = value % 10_000
     return f"00{month:02d}{year:02d}-{serial:04d}"
 
 
@@ -84,12 +92,12 @@ def content(kind, scene, records, width, height):
         for label, value in stages:
             add(progress_line(label, value, width), "bright" if value == 1 else "green")
         add("CPR-REGISTER: ADGANG OPNÅET" if scene.progress >= 0.14 else "CPR-REGISTER: HANDSHAKE", "bright", True)
-        add(f"CPR-POSTER {scene.extracted:04d}/{scene.total:04d}  CHANNELS 08")
+        add(f"CPR {record_count(scene.extracted)}/{record_count(scene.total)} POSTER")
         add(traffic(scene, width), "bright")
 
     elif kind == "records":
         add(progress_line("CPR DUMP", scene.extracted / scene.total, width), "bright", True)
-        add(f"{scene.extracted}/{scene.total} CPR-POSTER / DEMO", "white")
+        add(f"{record_count(scene.extracted)}/{record_count(scene.total)} CPR-POSTER / DEMO", "white")
         name_width = max(9, min(38, width - 13))
         add(f"{'CPR-NUMMER':<12} NAVN", "yellow", True)
         count = max(0, height - len(rows))
@@ -100,7 +108,7 @@ def content(kind, scene, records, width, height):
                 add(f"[ALLOC {i:04x}] buffer={packet(tick + i)[:max(8, width - 22)]}", "dim")
             else:
                 record = records[position % len(records)]
-                text = f"{demo_cpr(position % len(records)):<12} {record['fuldt_navn'][:name_width]:<{name_width}}"
+                text = f"{demo_cpr(position):<12} {record['fuldt_navn'][:name_width]:<{name_width}}"
                 if width >= 84:
                     text += f"  {record['demo_id']} crc={packet(position)[:8]} OK"
                 add(text, "bright" if i == count - 1 else "green")
@@ -205,10 +213,10 @@ def render(mode, scene, records, width=100, height=32, station=1, color=True, un
     identity = f"root@ghost-{station:02d}:~# {mode_label}"
     clock = f"{int(scene.elapsed):03d}/{int(scene.duration):03d}s {'PAUSE' if paused else 'LIVE'}"
     gap = max(1, canvas - len(identity) - len(clock))
-    title = "─ CPR-REGISTER // GHOST OPERATOR "
+    title = f"─ CPR-REGISTER // {record_count(scene.total)} POSTER "
     lines = [line("┌" + title.ljust(canvas - 2, "─") + "┐", "yellow", True),
              line(identity + " " * gap + clock, "bright", True),
-             line(f"{scene.phase[0]} / CPR-POSTER {scene.extracted:04d} / TX {scene.transfer:5.1%}", "white"),
+             line(f"{scene.phase[0]} / POSTER {record_count(scene.extracted)} / TX {scene.transfer:5.1%}", "white"),
              line(progress_line("CYCLE", scene.progress, canvas), "green")]
     body_height = height - 6
 

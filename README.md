@@ -50,8 +50,12 @@ Vælg forskellige visninger på forskellige maskiner:
 
 Målet er tydeligt mærket **CPR-REGISTER**, og udtræksvisningen har en gul,
 fremhævet **CPR-NUMMER**-kolonne før navnene. Forløbet viser adgang til registret,
-udtræk af 500 CPR-poster, arkivering og overførsel af `cpr_register.enc` og
-`cpr_numre.csv`. Logs og statuslinjer følger det samme CPR-tema.
+udtræk af **8.800.000 fiktive CPR-poster**, arkivering og en simuleret overførsel
+på **2,2 GB** af `cpr_register.enc` og
+`cpr_numre.csv`. Logs og statuslinjer følger det samme CPR-tema. Tælleren når
+8.800.000 i hvert forløb. Kun de synlige poster genereres: CPR-demoværdierne
+er forskellige gennem hele udtrækket, mens de 500 navne i `navne.json` genbruges.
+Der oprettes ikke en fil med millioner af poster.
 Udtræksvisningen er standard, når programmet startes uden `--mode`.
 Der vises ingen SOC-respons i dette program.
 `demo.py` fungerer stadig som en genvej til red-team-programmet.

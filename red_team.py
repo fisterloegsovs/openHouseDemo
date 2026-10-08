@@ -9,7 +9,7 @@ import sys
 import time
 from dataclasses import dataclass
 
-from display import FILES, MODES, render
+from display import FILES, MODES, TOTAL_RECORDS, record_count, render
 from terminal import Terminal, duration_arg, terminal_size
 
 EVENTS = (
@@ -19,7 +19,7 @@ EVENTS = (
     (0.14, "OK", "CPR-REGISTER: ADGANG OPNÅET"),
     (0.26, "INFO", "CPR-NUMRE + NAVNE / udtræk startet"),
     (0.40, "INFO", "CPR-POSTER / batches serialized"),
-    (0.52, "OK", "CPR DUMP COMPLETE / demo-poster cached"),
+    (0.52, "OK", "CPR DUMP COMPLETE / {total} poster"),
     (0.55, "INFO", "CPR-ARKIV / cipher buffer ready"),
     (0.58, "INFO", "CPR-NUMRE OVERFØRES / uplink open"),
     (0.70, "INFO", "CPR-DATA / ACK received"),
@@ -58,7 +58,7 @@ def load_records(path):
 class Scene:
     elapsed: float
     duration: float
-    total: int
+    total: int = TOTAL_RECORDS
 
     @property
     def progress(self):
@@ -66,6 +66,8 @@ class Scene:
 
     @property
     def extracted(self):
+        if self.progress >= 0.52:
+            return self.total
         return min(self.total, int(clamp((self.progress - 0.14) / 0.38) * self.total + 1e-9))
 
     @property
@@ -98,7 +100,8 @@ class Scene:
         return base_rate * (1 + 0.15 * math.sin(self.elapsed * 1.3))
 
     def events(self):
-        return [(at * self.duration, level, message) for at, level, message in EVENTS if at <= self.progress]
+        return [(at * self.duration, level, message.format(total=record_count(self.total)))
+                for at, level, message in EVENTS if at <= self.progress]
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
@@ -129,7 +132,7 @@ def main(argv=None):
 
     def draw(terminal=None):
         size = terminal_size()
-        lines = render(mode, Scene(elapsed, args.duration, len(records)), records,
+        lines = render(mode, Scene(elapsed, args.duration), records,
                        size.columns, size.lines, args.station,
                        color=not args.no_color and (terminal is not None),
                        unicode=not args.ascii, paused=paused, repeat=not args.once)
