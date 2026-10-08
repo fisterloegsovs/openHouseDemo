@@ -3,7 +3,7 @@
 Tre **separate terminalprogrammer** til en cybersikkerhedsopstilling:
 
 - **Red team — `red_team.py`:** Et grønt hacker-show med root-console,
-  sessions, navneudtræk, hex-buffers, progressbarer og filoverførsler.
+  et CPR-register, navne, CPR-demoværdier, hex-buffers og filoverførsler.
 - **Blue team — `blue_team.py`:** En cyanfarvet SOC-terminal med overvågning,
   røde alarmer, trafik, bevismateriale og hændelseshåndtering.
 - **Satellitstation — `satellite.py`:** Et stort verdenskort med banespor,
@@ -43,13 +43,17 @@ Vælg forskellige visninger på forskellige maskiner:
 | PC | Kommando | Visning |
 | --- | --- | --- |
 | 1 | `python3 red_team.py --mode overview --station 1` | Root-session, buffers og overførsler |
-| 2 | `python3 red_team.py --mode extract --station 2` | Personregister med opdigtede navne |
+| 2 | `python3 red_team.py --mode extract --station 2` | CPR-register med demoværdier og navne |
 | 3 | `python3 red_team.py --mode transfer --station 3` | Filer, progressbarer og pakkestrøm |
 | 4 | `python3 red_team.py --mode recon --station 4` | Fiktive værter, porte og sessions |
 | 5 | `python3 red_team.py --mode matrix --station 5` | Matrix-effekt over hele skærmen |
 
-Forløbet går fra kortlægning til sessions, udtræk af 500 navne, arkivering og
-en fuldført overførsel. Der vises ingen SOC-respons i dette program.
+Målet er tydeligt mærket **CPR-REGISTER**, og udtræksvisningen har en gul,
+fremhævet **CPR-NUMMER**-kolonne før navnene. Forløbet viser adgang til registret,
+udtræk af 500 CPR-poster, arkivering og overførsel af `cpr_register.enc` og
+`cpr_numre.csv`. Logs og statuslinjer følger det samme CPR-tema.
+Udtræksvisningen er standard, når programmet startes uden `--mode`.
+Der vises ingen SOC-respons i dette program.
 `demo.py` fungerer stadig som en genvej til red-team-programmet.
 
 ## Blue team
@@ -162,7 +166,10 @@ bytes, ikke indhold fra netværkstrafik eller rigtig kryptering.
 
 Red team læser `navne.json` lokalt uden at ændre filen. Navnene er kombineret
 fra indbyggede lister og kan tilfældigvis matche rigtige personer. CPR-felterne
-vises som `******-****`; der genereres ingen CPR-numre. Alle visninger er
+viser demoværdier som `000140-0001` i det velkendte seks-plus-fire-format.
+Alle starter med fødselsdag **00**, som er ugyldig, så værdierne ikke kan være
+rigtige CPR-numre. De er stabile gennem forløbet og genereres kun til visningen;
+navnefilerne ændres ikke. Alle visninger er
 mærket med `SIMULATION / FIKTIVE DATA` nederst.
 
 ## Kontrol og test

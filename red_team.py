@@ -13,19 +13,19 @@ from display import FILES, MODES, render
 from terminal import Terminal, duration_arg, terminal_size
 
 EVENTS = (
-    (0.00, "INFO", "route map initialized / workers online"),
-    (0.04, "INFO", "node inventory ready / vault-01.demo.invalid"),
-    (0.10, "OK", "handshake complete / session established"),
-    (0.14, "OK", "ACCESS GRANTED / database cursor attached"),
-    (0.26, "INFO", "record stream active / buffer pages committed"),
-    (0.40, "INFO", "batch serialization / checksums verified"),
-    (0.52, "OK", "DUMP COMPLETE / synthetic records cached"),
-    (0.55, "INFO", "archive segments packed / cipher buffer ready"),
-    (0.58, "INFO", "UPLINK OPEN / transfer queue dispatched"),
-    (0.70, "INFO", "stream windows advancing / ACK received"),
-    (0.84, "OK", "checksum verified / final segments queued"),
-    (0.94, "OK", "TRANSFER COMPLETE / destination acknowledged"),
-    (0.98, "OK", "session archived / next cycle queued"),
+    (0.00, "INFO", "TARGET CPR-REGISTER / workers online"),
+    (0.04, "INFO", "cpr-register.demo.invalid / database found"),
+    (0.10, "OK", "CPR-REGISTER / session established"),
+    (0.14, "OK", "CPR-REGISTER: ADGANG OPNÅET"),
+    (0.26, "INFO", "CPR-NUMRE + NAVNE / udtræk startet"),
+    (0.40, "INFO", "CPR-POSTER / batches serialized"),
+    (0.52, "OK", "CPR DUMP COMPLETE / demo-poster cached"),
+    (0.55, "INFO", "CPR-ARKIV / cipher buffer ready"),
+    (0.58, "INFO", "CPR-NUMRE OVERFØRES / uplink open"),
+    (0.70, "INFO", "CPR-DATA / ACK received"),
+    (0.84, "OK", "CPR checksum OK / final segments queued"),
+    (0.94, "OK", "CPR TRANSFER COMPLETE"),
+    (0.98, "OK", "CPR session archived / next cycle queued"),
 )
 
 
@@ -79,16 +79,16 @@ class Scene:
     @property
     def phase(self):
         if self.progress >= 0.94:
-            return "TRANSFER COMPLETE", "green"
+            return "TRANSFER COMPLETE / CPR-DATA", "green"
         if self.progress >= 0.58:
-            return "UPLINK ACTIVE", "green"
+            return "CPR-NUMRE OVERFØRES", "green"
         if self.progress >= 0.52:
-            return "PACKING ARCHIVE", "green"
+            return "CPR-ARKIV PAKKES", "green"
         if self.progress >= 0.14:
-            return "DUMPING PERSONREGISTER", "green"
+            return "CPR-NUMRE UDTRÆKKES", "green"
         if self.progress >= 0.10:
-            return "SESSION ESTABLISHED", "green"
-        return "MAPPING NODES", "green"
+            return "CPR-REGISTER: SESSION OPEN", "green"
+        return "TARGET: CPR-REGISTER", "green"
 
     @property
     def rate(self):
@@ -102,7 +102,7 @@ class Scene:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=MODES, default="overview", help="Visning på denne PC")
+    parser.add_argument("--mode", choices=MODES, default="extract", help="Visning på denne PC (standard: extract)")
     parser.add_argument("--station", type=int, choices=range(1, 100), default=1, metavar="1-99")
     parser.add_argument("--duration", type=duration_arg, default=180, help="Sekunder pr. forløb (standard: 180)")
     parser.add_argument("--names", type=Path, default=Path(__file__).resolve().with_name("navne.json"))

@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from display import MODES
+from display import MODES, demo_cpr
 from red_team import Scene, load_records, render
 
 ROOT = Path(__file__).resolve().parent
@@ -34,7 +34,7 @@ class DemoTests(unittest.TestCase):
         self.assertGreater(transferring.rate, 0)
         self.assertEqual(completed.rate, 0)
         self.assertEqual(completed.transfer, 1)
-        self.assertEqual(completed.phase[0], "TRANSFER COMPLETE")
+        self.assertEqual(completed.phase[0], "TRANSFER COMPLETE / CPR-DATA")
 
     def test_every_view_fits_laptop_terminal_at_all_phases(self):
         for width, height in ((62, 22), (80, 24), (120, 40), (180, 55), (260, 75)):
@@ -49,13 +49,36 @@ class DemoTests(unittest.TestCase):
                         self.assertIn("FIKTIVE DATA", ANSI.sub("", "\n".join(lines)))
                         self.assertIn("Q AFSLUT", ANSI.sub("", lines[-1]))
 
-    def test_extraction_uses_names_and_masked_cpr_fields(self):
+    def test_extraction_uses_names_and_prominent_fictional_cpr_fields(self):
         output = "\n".join(render("extract", Scene(180 * 0.52, 180, len(self.records)),
                                    self.records, 100, 32, color=False))
         self.assertIn(self.records[-1]["fuldt_navn"], output)
-        self.assertIn("******-****", output)
-        self.assertNotRegex(output, r"\b\d{6}-\d{4}\b")
-        self.assertIn("500/500 POSTER", output)
+        self.assertIn("CPR-NUMMER", output)
+        self.assertIn(demo_cpr(len(self.records) - 1), output)
+        self.assertIn("500/500 CPR-POSTER", output)
+        self.assertTrue(all(number.startswith("00") for number in re.findall(r"\b\d{6}-\d{4}\b", output)))
+
+    def test_demo_cpr_values_are_unique_and_have_an_impossible_birth_day(self):
+        numbers = [demo_cpr(i) for i in range(len(self.records))]
+        self.assertEqual(len(set(numbers)), len(self.records))
+        for number in numbers:
+            self.assertRegex(number, r"^00\d{4}-\d{4}$")
+            self.assertTrue(1 <= int(number[2:4]) <= 12)
+
+    def test_cpr_target_visible_in_every_mode_even_on_a_small_laptop(self):
+        for mode in MODES:
+            output = "\n".join(render(mode, Scene(140, 180, len(self.records)), self.records,
+                                       62, 22, color=False))
+            self.assertIn("CPR-REGISTER", output.splitlines()[0])
+            self.assertIn("CPR", output.splitlines()[2])
+
+    def test_cpr_column_comes_first_and_has_a_distinct_color(self):
+        lines = render("extract", Scene(100, 180, len(self.records)), self.records, 100, 32)
+        cpr = demo_cpr(len(self.records) - 1)
+        row = next(line for line in lines if cpr in line)
+        self.assertIn("\033[40;1;93m" + cpr, row)
+        plain = ANSI.sub("", row)
+        self.assertLess(plain.index(cpr), plain.index(self.records[-1]["fuldt_navn"]))
 
     def test_red_team_finishes_transfer_without_defensive_content(self):
         scene = Scene(175, 180, len(self.records))
@@ -91,6 +114,10 @@ class DemoTests(unittest.TestCase):
 
     def test_cli_works_from_another_directory_and_reports_missing_data(self):
         with tempfile.TemporaryDirectory() as directory:
+            default = subprocess.run([sys.executable, str(ROOT / "red_team.py"), "--frames", "1"],
+                                     cwd=directory, capture_output=True, text=True)
+            self.assertEqual(default.returncode, 0, default.stderr)
+            self.assertIn("CPR-NUMMER", default.stdout)
             for mode in MODES:
                 result = subprocess.run([sys.executable, str(ROOT / "red_team.py"), "--mode", mode,
                                          "--frames", "1", "--no-color"], cwd=directory,
